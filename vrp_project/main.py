@@ -1,4 +1,5 @@
 # Author: Shaima Shakhashiro
+"""
 Main file: runs all experiments and draws the charts.
 
     python main.py --runs 10
