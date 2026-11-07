@@ -1,4 +1,5 @@
-Author:noor
+#Author:noor
+"""
 Charts for the report:
 - convergence curves (Iteration -> Best Fitness) for each size
 - the same curves against the number of fitness evaluations
