@@ -3,11 +3,12 @@ Correctness tests:
 
     python verify.py
 
-1) exact_cvrp and held_karp give the same answer as brute force (15 small instances).
-2) the PSO swap sequence really turns a route into its target.
-3) GA, PSO and ACO return valid solutions (every customer once, no route
-   over capacity) and the reported fitness is correct.
-4) the CVRPLIB benchmark is read correctly: the published optimal solution,
+1) exact_cvrp gives the same answer as brute force (15 small instances).
+2) held_karp gives the same answer as brute force TSP (same 15 instances).
+3) the PSO swap sequence really turns a route into its target.
+4) GA, PSO and ACO return valid solutions (every customer once, no route
+   over capacity) and the reported fitness is correct, on every instance.
+5) the CVRPLIB benchmark is read correctly: the published optimal solution,
    evaluated with our code, gives exactly the published cost (27591).
 """
 import itertools
@@ -51,7 +52,7 @@ def check(ok, message):
 def main():
     results = []
 
-    # 1) DP vs brute force
+    # 1) + 2) DP vs brute force
     wrong_cvrp = wrong_tsp = 0
     for s in range(15):
         inst = generate_instance("test", 6, capacity=15.0, seed=100 + s)
@@ -63,7 +64,7 @@ def main():
     results.append(check(wrong_cvrp == 0, "exact CVRP DP == brute force on 15 random instances"))
     results.append(check(wrong_tsp == 0, "Held-Karp == brute force TSP on 15 random instances"))
 
-    # 2) PSO swap sequence
+    # 3) PSO swap sequence
     rng = np.random.default_rng(0)
     reached = 0
     for _ in range(1000):
@@ -76,7 +77,7 @@ def main():
             reached += 1
     results.append(check(reached == 1000, f"PSO swap sequence reaches its target ({reached}/1000)"))
 
-    # 3) valid solutions from every algorithm on every size
+    # 4) valid solutions from every algorithm on every instance
     invalid = 0
     for size, inst in all_instances():
         dist = build_distance_matrix(inst)
