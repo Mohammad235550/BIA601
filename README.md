@@ -33,7 +33,7 @@ cd vrp_project
 pip install -r requirements.txt
 ```
 
-Tested on Python 3.12. Only `numpy` and `matplotlib` — no other dependencies.
+Tested on Python 3.12 and 3.13. Only `numpy` and `matplotlib` — no other dependencies.
 
 ## Running
 
@@ -54,7 +54,7 @@ algorithms on a real benchmark instance (see below). Output:
 results/
   raw_runs.csv        # every individual run: size, algorithm, run #, best_fitness, time_sec, evaluations
   convergence.csv     # iteration / evaluations -> mean, std, min, max best_fitness over all runs
-  summary_stats.csv   # mean/std/min/max fitness, mean time, mean evaluations, peak memory (MB)
+  summary_stats.csv   # mean/std/min/max fitness, mean time, mean evaluations, peak memory (MB), gap to optimum (%, benchmark)
   plots/
     convergence_Small.png / _Medium.png / _Large.png / _X-n101-k25.png   # Iteration -> Best Fitness (mean of all runs, band = best..worst run)
     convergence_*_evals.png                             # same, x-axis = fitness evaluations (fair budget view)
@@ -93,13 +93,16 @@ instance.
 python verify.py
 ```
 
-Checks that (1) the exact CVRP DP and Held-Karp match a brute-force search
-on 15 random 6-customer instances, (2) the PSO swap sequence turns a route
-exactly into its target, and (3) every algorithm returns a valid solution
-(each customer visited once, no route over capacity) whose reported fitness
-matches the recomputed total distance (on all sizes, including the benchmark),
-and (4) the benchmark file is read correctly: the published optimal routes,
-evaluated by our own code, cost exactly 27591.
+Five checks, all must print PASS:
+
+1. the exact CVRP DP matches a brute-force search on 15 random 6-customer instances;
+2. Held-Karp matches a brute-force TSP search on the same 15 instances;
+3. the PSO swap sequence turns a route exactly into its target (1000 random cases);
+4. GA, PSO and ACO return valid solutions (each customer visited once, no route
+   over capacity) whose reported fitness matches the recomputed total distance,
+   on all four instances;
+5. the benchmark file is read correctly: the published optimal routes,
+   evaluated by our own code, cost exactly 27591.
 
 ## Project layout
 
