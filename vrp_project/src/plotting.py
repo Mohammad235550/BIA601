@@ -11,22 +11,24 @@ import matplotlib
 matplotlib.use("Agg")          # save to files only, no window
 import matplotlib.pyplot as plt
 
-SIZES = ["Small", "Medium", "Large"]
+SIZES = ["Small", "Medium", "Large"]          # generated sizes (bar charts)
+BENCHMARKS = {"X-n101-k25": 27591}            # real benchmark and its optimal cost
 ALGORITHMS = ["GA", "PSO", "ACO"]
 
 
 def plot_convergence(convergence, out_dir="results/plots", stats=None):
     os.makedirs(out_dir, exist_ok=True)
 
-    # exact optimum (Small only) drawn as a dashed line
+    # known optimum (Small: exact DP, benchmark: CVRPLIB) drawn as a dashed line
     optimum = {}
     for r in stats or []:
         if r["algorithm"] == "DP (exact CVRP optimum)":
             optimum[r["size"]] = r["mean_fitness"]
+    optimum.update(BENCHMARKS)
 
     for x_key, x_label, suffix in [("iteration", "Iteration", ""),
                                    ("evaluations", "Fitness evaluations", "_evals")]:
-        for size in SIZES:
+        for size in SIZES + list(BENCHMARKS):
             plt.figure(figsize=(7, 5))
             for name in ALGORITHMS:
                 rows = [r for r in convergence if r["size"] == size and r["algorithm"] == name]
@@ -38,8 +40,11 @@ def plot_convergence(convergence, out_dir="results/plots", stats=None):
                 # shaded band = best run .. worst run
                 plt.fill_between(x, low, high, color=line.get_color(), alpha=0.2)
             if size in optimum:
-                plt.axhline(optimum[size], color="black", linestyle="--", linewidth=1,
-                            label=f"Exact CVRP optimum ({optimum[size]:.2f})")
+                if size in BENCHMARKS:
+                    label = f"CVRPLIB optimum ({optimum[size]:.0f})"
+                else:
+                    label = f"Exact CVRP optimum ({optimum[size]:.2f})"
+                plt.axhline(optimum[size], color="black", linestyle="--", linewidth=1, label=label)
             plt.xlabel(x_label)
             plt.ylabel("Best Fitness (total distance)")
             plt.title(f"Convergence — {size} instance (mean, band = best..worst run)")

@@ -1,7 +1,8 @@
 # Author: Shaima Shakhashiro
 """
 Runs all experiments:
-- 3 problem sizes (Small, Medium, Large)
+- 3 generated problem sizes (Small, Medium, Large)
+- 1 real benchmark from CVRPLIB (X-n101-k25, 100 customers, optimum 27591)
 - GA, PSO, ACO, each repeated n_runs times with a fixed seed (reproducible)
 - the two DP baselines once, on Small only
 Saves raw_runs.csv, convergence.csv and summary_stats.csv in the output folder.
@@ -12,7 +13,7 @@ import time
 import tracemalloc
 import numpy as np
 
-from .problem import generate_instance, build_distance_matrix
+from .problem import generate_instance, build_distance_matrix, load_cvrplib
 from .ga import run_ga
 from .pso import run_pso
 from .aco import run_aco
@@ -23,6 +24,12 @@ SIZES = {
     "Small":  dict(n_customers=10, capacity=50.0, seed=1),
     "Medium": dict(n_customers=30, capacity=50.0, seed=2),
     "Large":  dict(n_customers=60, capacity=50.0, seed=3),
+}
+
+# real benchmark instance from CVRPLIB (Uchoa et al. 2017), with its proven optimal cost
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+BENCHMARKS = {
+    "X-n101-k25": dict(path=os.path.join(DATA_DIR, "X-n101-k25.vrp"), best_known=27591),
 }
 
 ALGORITHMS = {"GA": run_ga, "PSO": run_pso, "ACO": run_aco}
@@ -47,14 +54,21 @@ def measure_memory(algo, instance, dist, seed):
     return peak / (1024 * 1024)
 
 
+def all_instances():
+    """The 3 generated sizes, then the real benchmark instances."""
+    for size, cfg in SIZES.items():
+        yield size, generate_instance(name=size, **cfg)
+    for name, cfg in BENCHMARKS.items():
+        yield name, load_cvrplib(cfg["path"])
+
+
 def run_all(n_runs=N_RUNS, out_dir="results"):
     os.makedirs(out_dir, exist_ok=True)
     runs = []          # one row per run
     convergence = []   # one row per iteration (mean over the runs)
     memory = {}
 
-    for size, cfg in SIZES.items():
-        instance = generate_instance(name=size, **cfg)
+    for size, instance in all_instances():
         dist = build_distance_matrix(instance)
 
         # --- DP baselines (Small only) ---
@@ -106,14 +120,22 @@ def run_all(n_runs=N_RUNS, out_dir="results"):
               "std_best_fitness", "min_best_fitness", "max_best_fitness"])
     save_csv(f"{out_dir}/summary_stats.csv", stats,
              ["size", "algorithm", "mean_fitness", "std_fitness", "min_fitness", "max_fitness",
-              "mean_time_sec", "mean_evaluations", "peak_memory_mb"])
+              "mean_time_sec", "mean_evaluations", "peak_memory_mb", "gap_to_optimum_pct"])
     return runs, convergence, stats
+
+
+def gap_percent(size, value):
+    """Gap (%) of a mean result from the known optimum (benchmark only)."""
+    if size not in BENCHMARKS:
+        return ""
+    best = BENCHMARKS[size]["best_known"]
+    return 100.0 * (value - best) / best
 
 
 def summarize(runs, memory):
     """Mean / std / best / worst for every (size, algorithm)."""
     stats = []
-    for size in SIZES:
+    for size in list(SIZES) + list(BENCHMARKS):
         names = sorted({r["algorithm"] for r in runs if r["size"] == size})
         for name in names:
             rows = [r for r in runs if r["size"] == size and r["algorithm"] == name]
@@ -127,5 +149,6 @@ def summarize(runs, memory):
                               max_fitness=float(fit.max()),
                               mean_time_sec=float(times.mean()),
                               mean_evaluations=float(np.mean(evals)) if evals else "",
-                              peak_memory_mb=memory.get((size, name), "")))
+                              peak_memory_mb=memory.get((size, name), ""),
+                              gap_to_optimum_pct=gap_percent(size, float(fit.mean()))))
     return stats

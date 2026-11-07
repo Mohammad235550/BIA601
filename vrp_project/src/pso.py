@@ -17,11 +17,13 @@ from .problem import total_cost
 def swap_sequence(source, target, probability):
     """List of swaps (i, j, probability) that turns `source` into `target`."""
     current = list(source)
+    position = {c: i for i, c in enumerate(current)}   # where each customer is now
     swaps = []
     for i in range(len(current)):
         if current[i] != target[i]:
-            j = current.index(target[i])
+            j = position[target[i]]
             swaps.append((i, j, probability))
+            position[current[i]], position[current[j]] = j, i
             current[i], current[j] = current[j], current[i]
     return swaps
 

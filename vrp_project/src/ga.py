@@ -26,7 +26,8 @@ def order_crossover(parent_a, parent_b, rng):
     # 1) copy a slice from parent A
     child[start:end] = parent_a[start:end]
     # 2) fill the empty places with the remaining customers in parent B's order
-    remaining = [c for c in parent_b if c not in child[start:end]]
+    taken = set(child[start:end])
+    remaining = [c for c in parent_b if c not in taken]
     k = 0
     for i in range(size):
         if child[i] is None:

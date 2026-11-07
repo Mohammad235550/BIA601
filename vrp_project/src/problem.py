@@ -12,13 +12,14 @@ import numpy as np
 
 
 class CVRPInstance:
-    def __init__(self, name, depot, coords, demands, capacity):
-        self.name = name          # "Small", "Medium" or "Large"
+    def __init__(self, name, depot, coords, demands, capacity, rounded=False):
+        self.name = name          # "Small", "Medium", "Large" or a benchmark name
         self.depot = depot        # (x, y) of the depot
         self.coords = coords      # (x, y) of every customer
         self.demands = demands    # demand of every customer
         self.capacity = capacity  # capacity of one vehicle (Q)
         self.n = len(coords)      # number of customers
+        self.rounded = rounded    # True for CVRPLIB files: distances rounded to integers
 
 
 def generate_instance(name, n_customers, capacity=50.0, seed=0, grid_size=100.0):
@@ -30,14 +31,54 @@ def generate_instance(name, n_customers, capacity=50.0, seed=0, grid_size=100.0)
     return CVRPInstance(name, depot, coords, demands, capacity)
 
 
+def load_cvrplib(path):
+    """Read a benchmark file from CVRPLIB (.vrp format, EUC_2D).
+    Node 1 in the file is the depot, the other nodes are the customers."""
+    with open(path) as f:
+        lines = [line.strip() for line in f]
+    name = capacity = None
+    coords, demands = {}, {}
+    section = None
+    for line in lines:
+        if not line or line == "EOF":
+            continue
+        if line.startswith("NAME"):
+            name = line.split(":")[1].strip()
+        elif line.startswith("CAPACITY"):
+            capacity = float(line.split(":")[1])
+        elif line.startswith("NODE_COORD_SECTION"):
+            section = "coords"
+        elif line.startswith("DEMAND_SECTION"):
+            section = "demands"
+        elif line.startswith("DEPOT_SECTION"):
+            section = "depot"
+        elif section == "coords":
+            node, x, y = line.split()
+            coords[int(node)] = (float(x), float(y))
+        elif section == "demands":
+            node, q = line.split()
+            demands[int(node)] = float(q)
+    customers = sorted(k for k in coords if k != 1)
+    return CVRPInstance(name,
+                        depot=np.array(coords[1]),
+                        coords=np.array([coords[k] for k in customers]),
+                        demands=np.array([demands[k] for k in customers]),
+                        capacity=capacity,
+                        rounded=True)
+
+
 def build_distance_matrix(instance):
-    """Euclidean distances. Index 0 = depot, index i+1 = customer i."""
+    """Euclidean distances. Index 0 = depot, index i+1 = customer i.
+    For CVRPLIB files the distance is rounded to the nearest integer
+    (the official EUC_2D rule), so our costs are comparable to the published ones."""
     points = np.vstack([instance.depot, instance.coords])
     n = len(points)
     dist = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
             dist[i, j] = np.sqrt(((points[i] - points[j]) ** 2).sum())
+            if instance.rounded:
+                dist[i, j] = np.floor(dist[i, j] + 0.5)
     return dist
 
 
