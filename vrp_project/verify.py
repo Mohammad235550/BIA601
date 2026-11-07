@@ -7,16 +7,18 @@ Correctness tests:
 2) the PSO swap sequence really turns a route into its target.
 3) GA, PSO and ACO return valid solutions (every customer once, no route
    over capacity) and the reported fitness is correct.
+4) the CVRPLIB benchmark is read correctly: the published optimal solution,
+   evaluated with our code, gives exactly the published cost (27591).
 """
 import itertools
 import numpy as np
 
-from src.problem import generate_instance, build_distance_matrix, route_distance, evaluate
+from src.problem import generate_instance, build_distance_matrix, route_distance, evaluate, load_cvrplib
 from src.dp_baseline import held_karp, exact_cvrp
 from src.pso import swap_sequence, run_pso
 from src.ga import run_ga
 from src.aco import run_aco
-from src.experiment import SIZES
+from src.experiment import SIZES, BENCHMARKS, all_instances
 
 
 def brute_force_cvrp(instance, dist):
@@ -76,8 +78,7 @@ def main():
 
     # 3) valid solutions from every algorithm on every size
     invalid = 0
-    for size, cfg in SIZES.items():
-        inst = generate_instance(name=size, **cfg)
+    for size, inst in all_instances():
         dist = build_distance_matrix(inst)
         for algo, key in [(run_ga, "route"), (run_pso, "solution"), (run_aco, "tour")]:
             result = algo(inst, dist, seed=0)
@@ -89,6 +90,23 @@ def main():
             if not (every_customer_once and capacity_ok and fitness_ok):
                 invalid += 1
     results.append(check(invalid == 0, "GA / PSO / ACO return valid solutions with correct fitness (all sizes)"))
+
+    # 5) benchmark file + published optimal solution
+    for name, cfg in BENCHMARKS.items():
+        inst = load_cvrplib(cfg["path"])
+        dist = build_distance_matrix(inst)
+        routes = []
+        with open(cfg["path"].replace(".vrp", ".sol")) as f:
+            for line in f:
+                if line.startswith("Route"):
+                    routes.append([int(c) - 1 for c in line.split(":")[1].split()])
+        served = sorted(c for r in routes for c in r)
+        cost = sum(route_distance(r, dist) for r in routes)
+        ok = (served == list(range(inst.n))
+              and all(sum(inst.demands[c] for c in r) <= inst.capacity for r in routes)
+              and abs(cost - cfg["best_known"]) < 1e-9)
+        results.append(check(ok, f"{name}: published optimal solution costs {cost:.0f} with our code "
+                                 f"(expected {cfg['best_known']})"))
 
     print("\nAll checks passed." if all(results) else "\nSome checks FAILED.")
 

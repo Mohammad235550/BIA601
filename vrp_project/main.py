@@ -24,11 +24,14 @@ def main():
     plot_time_comparison(stats, out_dir=f"{args.out}/plots")
 
     print("\n=== Results ===")
-    print(f"{'size':<8}{'algorithm':<26}{'mean':>10}{'std':>9}{'best':>10}{'time(s)':>9}{'evals':>8}")
+    print(f"{'size':<12}{'algorithm':<26}{'mean':>10}{'std':>9}{'best':>10}{'time(s)':>9}{'evals':>8}")
     for r in stats:
         evals = f"{r['mean_evaluations']:.0f}" if r["mean_evaluations"] != "" else "-"
-        print(f"{r['size']:<8}{r['algorithm']:<26}{r['mean_fitness']:>10.2f}{r['std_fitness']:>9.2f}"
+        print(f"{r['size']:<12}{r['algorithm']:<26}{r['mean_fitness']:>10.2f}{r['std_fitness']:>9.2f}"
               f"{r['min_fitness']:>10.2f}{r['mean_time_sec']:>9.2f}{evals:>8}")
+    for r in stats:
+        if r["gap_to_optimum_pct"] != "":
+            print(f"{r['size']}: {r['algorithm']} mean gap to optimum = {r['gap_to_optimum_pct']:.2f}%")
     print(f"\nResults saved in '{args.out}/'")
 
 
