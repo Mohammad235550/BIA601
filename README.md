@@ -47,7 +47,8 @@ python main.py --runs 10
 
 This generates three CVRP instances (Small = 10 customers, Medium = 30,
 Large = 60), runs GA/PSO/ACO `N` times each on every instance (plus the
-two exact DP baselines once each, on Small only), and writes:
+two exact DP baselines once each, on Small only). It then runs the same three
+algorithms on a real benchmark instance (see below). Output:
 
 ```
 results/
@@ -55,7 +56,7 @@ results/
   convergence.csv     # iteration / evaluations -> mean, std, min, max best_fitness over all runs
   summary_stats.csv   # mean/std/min/max fitness, mean time, mean evaluations, peak memory (MB)
   plots/
-    convergence_Small.png / _Medium.png / _Large.png   # Iteration -> Best Fitness (mean of all runs, band = best..worst run)
+    convergence_Small.png / _Medium.png / _Large.png / _X-n101-k25.png   # Iteration -> Best Fitness (mean of all runs, band = best..worst run)
     convergence_*_evals.png                             # same, x-axis = fitness evaluations (fair budget view)
     quality_comparison.png                              # mean solution quality per algorithm/size
     time_comparison.png                                 # mean execution time per algorithm/size
@@ -68,6 +69,24 @@ Instance generation is seeded (see `src/experiment.py: SIZES`), and every
 algorithm run uses a fixed, deterministic seed — running `main.py` again
 reproduces identical results.
 
+## Benchmark instance: X-n101-k25 (CVRPLIB)
+
+Besides the three generated instances, the experiments include a standard
+benchmark from the literature: **X-n101-k25** (Uchoa et al., 2017, set "X" of
+CVRPLIB) — 100 customers, vehicle capacity 206, total demand 5147, so at least
+25 vehicles are needed. Its **optimal cost is known: 27591**, which lets us
+report the exact gap (%) of every algorithm from the true optimum on a large
+instance.
+
+- Files: `data/X-n101-k25.vrp` (instance) and `data/X-n101-k25.sol` (published
+  optimal routes), taken from the PyVRP instances collection
+  (https://github.com/PyVRP/Instances, MIT licence), which mirrors CVRPLIB
+  (http://vrp.galgos.inf.puc-rio.br).
+- Read by `load_cvrplib()` in `src/problem.py`. As required by the CVRPLIB
+  convention for this set, distances are Euclidean **rounded to the nearest
+  integer** (generated instances keep exact real distances).
+- Algorithms and hyperparameters are exactly the same as for the other sizes.
+
 ## Correctness checks
 
 ```bash
@@ -78,13 +97,15 @@ Checks that (1) the exact CVRP DP and Held-Karp match a brute-force search
 on 15 random 6-customer instances, (2) the PSO swap sequence turns a route
 exactly into its target, and (3) every algorithm returns a valid solution
 (each customer visited once, no route over capacity) whose reported fitness
-matches the recomputed total distance.
+matches the recomputed total distance (on all sizes, including the benchmark),
+and (4) the benchmark file is read correctly: the published optimal routes,
+evaluated by our own code, cost exactly 27591.
 
 ## Project layout
 
 ```
 src/
-  problem.py       # CVRP instance generation, solution decoding, cost evaluation
+  problem.py       # CVRP instance generation, CVRPLIB reader, solution decoding, cost evaluation
   ga.py            # Genetic Algorithm
   pso.py           # Particle Swarm Optimization
   aco.py           # Ant Colony Optimization
@@ -94,6 +115,7 @@ src/
 main.py            # CLI entry point
 verify.py          # correctness checks (brute force, PSO operators, feasibility)
 requirements.txt   # numpy, matplotlib
+data/              # X-n101-k25 benchmark (.vrp instance + .sol optimal solution)
 ```
 
 ## Tuning
@@ -101,4 +123,5 @@ requirements.txt   # numpy, matplotlib
 Hyperparameters (population size, iterations, mutation rate, ACO
 alpha/beta/evaporation, PSO alfa/beta swap probabilities and n_random_swaps,
 stopping patience) are the keyword defaults on `run_ga`, `run_pso`, and `run_aco` in `src/`. Problem
-sizes and vehicle capacity are set in `SIZES` inside `src/experiment.py`.
+sizes and vehicle capacity are set in `SIZES`, benchmark files in `BENCHMARKS`,
+inside `src/experiment.py`.
