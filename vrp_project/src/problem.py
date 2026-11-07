@@ -1,6 +1,5 @@
+# Author: Rashed Bahnasi
 """
-Author: Rashed Bahnasi
-
 CVRP problem: data, distances and the fitness function.
 
 A solution is a list of customers in visiting order, e.g. [3, 0, 7, ...].
