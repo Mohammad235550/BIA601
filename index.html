@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<!-- Author: Mohammad Nour -->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVRP - BIA601</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2e7d4f;
+    --green-dark: #1f5c39;
+    --green-light: #e8f3ec;
+    --border: #d5e3da;
+    --text: #23302a;
+    --muted: #66746c;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Cairo", Tahoma, Arial, sans-serif; background: #f3f6f4; color: var(--text); margin: 0; font-size: 15px; }
+  .top { background: var(--green); color: #fff; padding: 22px 16px 34px; }
+  .top .inner { max-width: 1000px; margin: 0 auto; }
+  .top h1 { margin: 0; font-size: 24px; font-weight: 700; }
+  .top p { margin: 6px 0 0; opacity: .9; font-size: 14px; }
+  .top a { color: #fff; }
+  .sub-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 14px; }
+  .sub-head > span:first-child { opacity: .9; margin-left: 6px; }
+  .btns { display: inline-flex; gap: 8px; }
+  .hbtn { display: inline-block; padding: 4px 14px; border: 1px solid rgba(255,255,255,.8); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; }
+  .hbtn:hover { background: rgba(255,255,255,.15); }
+  .container { max-width: 1000px; margin: -14px auto 0; padding: 0 16px 30px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 18px; }
+  .card h2 { margin: 0 0 14px; font-size: 18px; color: var(--green-dark); display: flex; align-items: center; gap: 10px; }
+  .card h2 .num { background: var(--green); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+  .intro { margin: 0; line-height: 1.9; }
+  .form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: end; }
+  .form .field label.title { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  .form select { width: 100%; }
+  .checks { display: flex; gap: 14px; flex-wrap: wrap; padding: 6px 0; }
+  .checks label { display: inline-block; white-space: nowrap; }
+  select, button { font-family: inherit; font-size: 14px; }
+  select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); }
+  button { background: var(--green); color: #fff; border: none; border-radius: 6px; padding: 8px 26px; cursor: pointer; font-weight: 600; width: 100%; }
+  button:hover { background: var(--green-dark); }
+  button:disabled { background: #a9b8ae; cursor: default; }
+  .status { margin-top: 14px; padding: 10px 12px; background: #f1f4f2; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  .status.wait { background: #fff7e3; border-color: #f0d58a; color: #6b5110; }
+  .status.done { background: var(--green-light); border-color: #a9d3b8; color: var(--green-dark); font-weight: 600; }
+  .status.error { background: #fdecea; border-color: #f2b8b1; color: #a12a1e; }
+  .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid #e2c56d; border-top-color: #8a6a12; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: -2px; margin-left: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { background: var(--green); color: #fff; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #f7faf8; }
+  td:first-child { font-weight: 600; text-align: right; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+  .ok { color: var(--green); font-weight: 700; }
+  .bad { color: #c0392b; font-weight: 700; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+  @media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  .sub { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 600; }
+  svg { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: block; }
+  .imgs { display: grid; gap: 14px; margin-top: 16px; justify-items: center; }
+  .imgs img { width: 100%; max-width: 760px; background: #fff; border: 1px solid var(--border); border-radius: 6px; display: block; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 16px; height: 3px; vertical-align: middle; margin-left: 5px; }
+  ul.routes { font-size: 13px; color: var(--muted); padding-right: 18px; margin: 10px 0 0; }
+  .empty { color: var(--muted); text-align: center; padding: 30px 0; font-size: 14px; }
+  footer { text-align: center; font-size: 13px; color: var(--muted); padding: 10px 0 20px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="inner">
+    <h1>مسألة توجيه المركبات ذات السعة المحدودة (CVRP)</h1>
+    <div class="sub-head">
+      <span>خوارزميات ذكية</span>
+      <span class="btns">
+        <a class="hbtn" href="https://github.com/Mohammad235550/BIA601">الكود على GitHub</a>
+        <a class="hbtn" href="https://github.com/Mohammad235550/BIA601/blob/main/README.md">ملف README</a>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="card">
+  <p class="intro">في هذه الصفحة يمكن تشغيل الخوارزميات الثلاث (GA و PSO و ACO) والبرمجة الديناميكية على مسائل المشروع من المتصفح مباشرة.
+  الصفحة تستخدم مكتبة Pyodide لتشغيل ملفات Python الموجودة في المجلد <span class="ltr">vrp_project/src</span> كما هي، وبنفس المسائل ونفس البذور العشوائية التي استعملناها في التقرير.</p>
+</div>
+
+<div class="card">
+  <h2><span class="num">1</span> اختيار التجربة</h2>
+  <div class="form">
+    <div class="field">
+      <label class="title" for="size">حجم المسألة</label>
+      <select id="size">
+        <option value="Small">Small (10 زبائن)</option>
+        <option value="Medium">Medium (30 زبون)</option>
+        <option value="Large">Large (60 زبون)</option>
+        <option value="XLarge">XLarge (100 زبون)</option>
+      </select>
+    </div>
+    <div class="field" style="grid-column: span 2">
+      <label class="title">الخوارزميات</label>
+      <div class="checks">
+        <label><input type="checkbox" value="GA" checked> GA</label>
+        <label><input type="checkbox" value="PSO" checked> PSO</label>
+        <label><input type="checkbox" value="ACO" checked> ACO</label>
+        <label><input type="checkbox" value="DP" id="dpBox" checked> DP (للحجم الصغير)</label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="title" for="run">رقم التشغيل</label>
+      <select id="run"></select>
+    </div>
+    <div class="field">
+      <button id="go" disabled>تشغيل</button>
+    </div>
+  </div>
+  <div class="status wait" id="status"><span class="spinner"></span>جاري تحميل Python في المتصفح، انتظر قليلاً...</div>
+  <p class="note">بعد الضغط على «تشغيل» انتظر حتى تظهر رسالة «انتهى تحميل النتائج». التشغيل في المتصفح أبطأ من التشغيل العادي: الحجم الصغير يحتاج ثوانٍ قليلة، والحجم XLarge قد يحتاج حوالي دقيقة.</p>
+</div>
+
+<div class="card">
+  <h2><span class="num">2</span> النتائج</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>الخوارزمية</th><th>أفضل مسافة</th><th>عدد المركبات</th><th>عدد التكرارات</th><th>عدد التقييمات</th><th>الزمن (ثانية)</th><th>نفس نتيجة التجربة؟</th></tr></thead>
+    <tbody id="results"><tr><td colspan="7" class="empty">لم يتم التشغيل بعد</td></tr></tbody>
+  </table>
+  </div>
+  <p class="note">العمود الأخير يقارن النتيجة مع نفس رقم التشغيل في الملف <span class="ltr">results/raw_runs.csv</span>، والعلامة ✓ تعني أن المسافة نفسها تماماً.</p>
+</div>
+
+<div class="card">
+  <h2><span class="num">3</span> الرسومات</h2>
+  <div class="two">
+    <div>
+      <div class="sub"><span>المسارات</span><select id="mapAlgo"></select></div>
+      <div id="map"><div class="empty">تظهر المسارات بعد التشغيل</div></div>
+      <ul class="routes" id="routes"></ul>
+    </div>
+    <div>
+      <div class="sub"><span>منحنى التقارب (Iteration → Best Fitness)</span></div>
+      <div id="chart"><div class="empty">يظهر المنحنى بعد التشغيل</div></div>
+      <div class="legend">
+        <span><i style="background:#6250d6"></i>GA</span>
+        <span><i style="background:#eda100"></i>PSO</span>
+        <span><i style="background:#1baf7a"></i>ACO</span>
+        <span><i style="background:#000; height:0; border-top:2px dashed #000"></i>الحل الأمثل (Small)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="num">4</span> نتائج التقرير (30 تشغيلاً لكل خوارزمية)</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>الخوارزمية</th><th>المتوسط</th><th>الانحراف المعياري</th><th>الأفضل</th><th>الأسوأ</th><th>متوسط الزمن (ث)</th></tr></thead>
+    <tbody id="summary"></tbody>
+  </table>
+  </div>
+  <div class="imgs">
+    <img id="convImg" alt="convergence">
+    <img src="vrp_project/results/plots/boxplots.png" alt="boxplots">
+  </div>
+</div>
+
+<footer>كل البيانات مولدة بكود المشروع نفسه، ولم نستخدم أي ملف بيانات خارجي.</footer>
+</div>
+
+<script>
+// ---------- settings ----------
+const COLORS = { GA: "#6250d6", PSO: "#eda100", ACO: "#1baf7a" };
+const ROUTE_COLORS = ["red", "green", "blue", "orange", "purple", "teal", "magenta", "brown", "olive", "navy", "gray", "black"];
+let results = {};
+let instance = null;
+let rawRuns = [];
+let summary = [];
+
+for (let i = 0; i < 30; i++) {
+  document.getElementById("run").innerHTML += "<option value='" + i + "'>" + (i + 1) + "</option>";
+}
+
+// ---------- worker that runs our python code ----------
+const worker = new Worker("web/worker.js");
+let callId = 0;
+const waiting = {};
+
+function callPython(fn, args) {
+  return new Promise(function (resolve, reject) {
+    callId++;
+    waiting[callId] = { resolve: resolve, reject: reject };
+    worker.postMessage({ id: callId, fn: fn, args: args });
+  });
+}
+
+worker.onmessage = function (e) {
+  const m = e.data;
+  if (m.type === "status") {
+    const text = { python: "جاري تحميل Python في المتصفح، انتظر قليلاً...", numpy: "جاري تحميل مكتبة numpy...", code: "جاري تحميل كود المشروع من GitHub..." };
+    setStatus(text[m.key], "wait");
+  } else if (m.type === "ready") {
+    setStatus("جاهز. اختر الإعدادات واضغط «تشغيل».", "");
+    document.getElementById("go").disabled = false;
+  } else if (m.type === "fatal") {
+    setStatus("حدث خطأ أثناء التحميل: " + m.text, "error");
+  } else if (waiting[m.id]) {
+    if (m.type === "result") waiting[m.id].resolve(m.data);
+    else waiting[m.id].reject(new Error(m.text));
+    delete waiting[m.id];
+  }
+};
+
+function setStatus(text, kind) {
+  const box = document.getElementById("status");
+  box.className = "status " + (kind || "");
+  box.innerHTML = (kind === "wait" ? "<span class='spinner'></span>" : "") + text;
+}
+
+// ---------- read the csv files of the experiments ----------
+function splitLine(line) {
+  // simple csv split (the DP names have a comma inside quotes)
+  const parts = [];
+  let current = "", inQuotes = false;
+  for (const ch of line) {
+    if (ch === '"') inQuotes = !inQuotes;
+    else if (ch === "," && !inQuotes) { parts.push(current); current = ""; }
+    else current += ch;
+  }
+  parts.push(current);
+  return parts;
+}
+
+function readCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const head = splitLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = splitLine(lines[i]);
+    const row = {};
+    head.forEach((h, j) => row[h] = parts[j]);
+    rows.push(row);
+  }
+  return rows;
+}
+
+fetch("vrp_project/results/raw_runs.csv").then(r => r.text()).then(t => { rawRuns = readCSV(t); });
+fetch("vrp_project/results/summary_stats.csv").then(r => r.text()).then(t => { summary = readCSV(t); showSummary(); });
+
+function experimentResult(size, algo, run) {
+  const name = algo === "DP" ? "DP (exact CVRP optimum)" : algo;
+  for (const r of rawRuns) {
+    if (r.size === size && r.algorithm === name && (algo === "DP" || Number(r.run) === run)) return Number(r.best_fitness);
+  }
+  return null;
+}
+
+// ---------- run button ----------
+document.getElementById("size").onchange = function () {
+  document.getElementById("dpBox").disabled = this.value !== "Small";
+  showSummary();
+};
+
+document.getElementById("go").onclick = async function () {
+  const size = document.getElementById("size").value;
+  const run = Number(document.getElementById("run").value);
+  const algos = [];
+  document.querySelectorAll("input[type=checkbox]").forEach(c => { if (c.checked && !c.disabled) algos.push(c.value); });
+  if (algos.length === 0) { setStatus("اختر خوارزمية واحدة على الأقل.", "error"); return; }
+
+  const button = this;
+  button.disabled = true;
+  button.textContent = "جاري التشغيل...";
+  results = {};
+  document.getElementById("results").innerHTML = "<tr><td colspan='7' class='empty'>جاري حساب النتائج، ستظهر هنا عند انتهاء كل خوارزمية...</td></tr>";
+  document.getElementById("map").innerHTML = "";
+  document.getElementById("routes").innerHTML = "";
+  document.getElementById("mapAlgo").innerHTML = "";
+  document.getElementById("chart").innerHTML = "";
+
+  const order = ["DP", "GA", "PSO", "ACO"].filter(a => algos.includes(a));
+  const start = Date.now();
+  let current = "";
+  const showProgress = function () {
+    const sec = Math.round((Date.now() - start) / 1000);
+    setStatus("جاري حساب النتائج، الرجاء الانتظار وعدم إغلاق الصفحة...<br><span style='font-size:13px'>" + current + "، والوقت حتى الآن " + sec + " ثانية</span>", "wait");
+  };
+  current = "جاري تجهيز المسألة";
+  showProgress();
+  const timer = setInterval(showProgress, 1000);
+  try {
+    instance = await callPython("instance_json", [size]);
+    for (let k = 0; k < order.length; k++) {
+      const a = order[k];
+      current = "الخوارزمية " + (k + 1) + " من " + order.length + " هي <bdi>" + a + "</bdi>";
+      showProgress();
+      if (a === "DP") results[a] = await callPython("dp_json", [size]);
+      else results[a] = await callPython("run_json", [size, a, run]);
+      showResults(size, run);
+      showMapOptions();
+      drawChart();
+    }
+    const total = Math.round((Date.now() - start) / 1000);
+    setStatus("✓ انتهى تحميل النتائج (استغرق " + total + " ثانية). النتائج والرسومات موجودة في الأسفل.", "done");
+  } catch (err) {
+    setStatus("حدث خطأ: " + err.message, "error");
+  }
+  clearInterval(timer);
+  button.disabled = false;
+  button.textContent = "تشغيل";
+};
+
+// ---------- results table ----------
+function iterations(algo, history) {
+  // PSO also stores the cost of the first (random) swarm, GA and ACO store one value per iteration
+  return algo === "PSO" ? history.length - 1 : history.length;
+}
+
+function showResults(size, run) {
+  let html = "";
+  for (const a of ["GA", "PSO", "ACO", "DP"]) {
+    const r = results[a];
+    if (!r) continue;
+    const ref = experimentResult(size, a, run);
+    let same = "-";
+    if (ref !== null) same = Math.abs(ref - r.best) < 1e-6 ? "<span class='ok'>✓ نعم</span>" : "<span class='bad'>✗ لا (" + ref.toFixed(2) + ")</span>";
+    html += "<tr><td>" + a + "</td><td>" + r.best.toFixed(2) + "</td><td>" + r.vehicles + "</td>" +
+            "<td>" + (r.history ? iterations(a, r.history) : "-") + "</td><td>" + (r.evaluations || "-") + "</td>" +
+            "<td>" + r.time.toFixed(2) + "</td><td>" + same + "</td></tr>";
+    if (a === "DP") html += "<tr><td>Held-Karp (حد أدنى بدون سعة)</td><td>" + r.heldkarp.toFixed(2) + "</td><td>1</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
+  }
+  document.getElementById("results").innerHTML = html;
+}
+
+// ---------- routes drawing ----------
+function showMapOptions() {
+  const sel = document.getElementById("mapAlgo");
+  const old = sel.value;
+  sel.innerHTML = "";
+  for (const a of Object.keys(results)) sel.innerHTML += "<option>" + a + "</option>";
+  sel.value = results[old] ? old : Object.keys(results).pop();
+  drawMap();
+}
+document.getElementById("mapAlgo").onchange = drawMap;
+
+function drawMap() {
+  const r = results[document.getElementById("mapAlgo").value];
+  if (!r || !instance) return;
+  const X = x => 5 + x;
+  const Y = y => 105 - y;
+  const point = i => (i === -1 ? instance.depot : instance.coords[i]);
+  let svg = "<svg viewBox='0 0 110 110'>";
+  r.routes.forEach(function (route, k) {
+    const ids = [-1].concat(route.customers).concat([-1]);
+    const pts = ids.map(i => X(point(i)[0]) + "," + Y(point(i)[1])).join(" ");
+    svg += "<polyline points='" + pts + "' fill='none' stroke='" + ROUTE_COLORS[k % ROUTE_COLORS.length] + "' stroke-width='0.7'/>";
+  });
+  instance.coords.forEach(function (c) {
+    svg += "<circle cx='" + X(c[0]) + "' cy='" + Y(c[1]) + "' r='1.1' fill='white' stroke='black' stroke-width='0.4'/>";
+  });
+  svg += "<rect x='" + (X(instance.depot[0]) - 2) + "' y='" + (Y(instance.depot[1]) - 2) + "' width='4' height='4' fill='black'/>";
+  svg += "</svg>";
+  document.getElementById("map").innerHTML = svg;
+
+  let list = "";
+  r.routes.forEach(function (route, k) {
+    list += "<li><span style='color:" + ROUTE_COLORS[k % ROUTE_COLORS.length] + "'>■</span> المركبة " + (k + 1) +
+            ": عدد الزبائن " + route.customers.length + "، الحمولة " + route.load + " من " + instance.capacity +
+            "، طول المسار " + route.length.toFixed(1) + "</li>";
+  });
+  document.getElementById("routes").innerHTML = list + "<li class='small'>المربع الأسود هو المستودع.</li>";
+}
+
+// ---------- convergence chart ----------
+function drawChart() {
+  const algos = ["GA", "PSO", "ACO"].filter(a => results[a]);
+  if (algos.length === 0) { document.getElementById("chart").innerHTML = ""; return; }
+  const W = 500, H = 470, left = 55, bottom = 30;
+  let maxIter = 0, minV = Infinity, maxV = -Infinity;
+  for (const a of algos) {
+    const h = results[a].history;
+    maxIter = Math.max(maxIter, h.length - 1);
+    minV = Math.min(minV, ...h);
+    maxV = Math.max(maxV, ...h);
+  }
+  if (results.DP) minV = Math.min(minV, results.DP.best);
+  const X = i => left + (W - left - 10) * i / Math.max(maxIter, 1);
+  const Y = v => 10 + (H - bottom - 10) * (maxV - v) / (maxV - minV || 1);
+
+  let svg = "<svg viewBox='0 0 " + W + " " + H + "' font-size='13' fill='#66746c'>";
+  for (let k = 0; k <= 4; k++) {
+    const v = minV + (maxV - minV) * k / 4;
+    svg += "<line x1='" + left + "' x2='" + (W - 10) + "' y1='" + Y(v) + "' y2='" + Y(v) + "' stroke='#e6eee9'/>";
+    svg += "<text x='" + (left - 5) + "' y='" + (Y(v) + 4) + "' text-anchor='end'>" + v.toFixed(0) + "</text>";
+  }
+  svg += "<text x='" + X(0) + "' y='" + (H - 10) + "' text-anchor='middle'>0</text>";
+  svg += "<text x='" + X(maxIter) + "' y='" + (H - 10) + "' text-anchor='middle'>" + maxIter + "</text>";
+  svg += "<text x='" + (W / 2) + "' y='" + (H - 5) + "' text-anchor='middle'>Iteration</text>";
+  if (results.DP) {
+    svg += "<line x1='" + left + "' x2='" + (W - 10) + "' y1='" + Y(results.DP.best) + "' y2='" + Y(results.DP.best) + "' stroke='black' stroke-dasharray='3 3'/>";
+  }
+  for (const a of algos) {
+    const pts = results[a].history.map((v, i) => X(i).toFixed(1) + "," + Y(v).toFixed(1)).join(" ");
+    svg += "<polyline points='" + pts + "' fill='none' stroke='" + COLORS[a] + "' stroke-width='2'/>";
+  }
+  svg += "</svg>";
+  document.getElementById("chart").innerHTML = svg;
+}
+
+// ---------- results of the report ----------
+function showSummary() {
+  const size = document.getElementById("size").value;
+  const order = { GA: 1, PSO: 2, ACO: 3 };
+  const rows = summary.filter(r => r.size === size).sort((a, b) => (order[a.algorithm] || 4) - (order[b.algorithm] || 4));
+  let html = "";
+  for (const r of rows) {
+    html += "<tr><td>" + r.algorithm + "</td><td>" + Number(r.mean_fitness).toFixed(2) + "</td><td>" + Number(r.std_fitness).toFixed(2) +
+            "</td><td>" + Number(r.min_fitness).toFixed(2) + "</td><td>" + Number(r.max_fitness).toFixed(2) + "</td><td>" + Number(r.mean_time_sec).toFixed(2) + "</td></tr>";
+  }
+  document.getElementById("summary").innerHTML = html;
+  document.getElementById("convImg").src = "vrp_project/results/plots/convergence_" + size + ".png";
+}
+</script>
+</body>
+</html>
